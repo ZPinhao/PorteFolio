@@ -1,83 +1,166 @@
-// Fonction pour afficher la section correspondante
+const gameBoard = document.querySelector("#gameBoard");
+const ctx = gameBoard.getContext("2d");
+const scoreText = document.querySelector("#scoreText");
+const resetBtn = document.querySelector("#resetBtn");
+const gameWidth = gameBoard.width;
+const gameHeight = gameBoard.height;
+const BoardBackground = "white";
+const snakeColor = "lightgreen";
+const snakeBorder = "black";
+const foodColor = "red";
+const unitSize = 25;
+let running = false;
+let xVelocity = unitSize;
+let yVelocity = 0;
+let foodX;
+let foodY;
+let score = 0;
+let snake = [
+    {x:unitSize * 4, y:0},
+    {x:unitSize * 3, y:0},
+    {x:unitSize * 2, y:0},
+    {x:unitSize * 1, y:0},
+    {x:unitSize, y:0},
+];
 
+window.addEventListener("keydown", changeDirection);
+resetBtn.addEventListener("click", resetGame);
 
-function afficherSection(sectionId) {
+gameStart();
 
+function gameStart(){
+    running = true;
+    scoreText.textContent = score;
+    createFood();
+    drawFood();
+    nextTick();
+};
+function nextTick(){
+    if(running){
+        setTimeout(()=>{
+            clearBoard();
+            drawFood();
+            moveSnake();
+            drawSnake();
+            checkGameOver();
+            nextTick();
+        }, 75);
+    }
+    else{
+        displayGameOver();
+    }
+};
+function clearBoard(){
+    ctx.fillStyle = BoardBackground;
+    ctx.fillRect(0, 0, gameWidth, gameHeight);
+};
+function createFood(){
+    function randomFood(min, max){
+        const randNum = Math.round((Math.random() * (max - min) + min) / unitSize) * unitSize;
+        return randNum;
+    }
+    foodX = randomFood(0, gameWidth - unitSize);
+    foodY = randomFood(0, gameWidth - unitSize);
+};
+function drawFood(){
+    ctx.fillStyle = foodColor;
+    ctx.fillRect(foodX, foodY, unitSize, unitSize);
 
-    // Masquer toutes les sections
+};
+function moveSnake(){
+    const head = {x: snake[0].x + xVelocity, y: snake[0].y + yVelocity};
+    snake.unshift(head);
+    //if food is eaten
+    if(snake[0].x == foodX && snake[0].y == foodY){
+        score+=1;
+        scoreText.textContent = score;
+        createFood();
+    }
+    else{
+        snake.pop();
+    }
+};
+function drawSnake(){
+    ctx.fillStyle = snakeColor;
+    ctx.strokeStyle = snakeBorder;
+    snake.forEach(snakePart => {
+        ctx.fillRect(snakePart.x, snakePart.y, unitSize, unitSize);
+        ctx.strokeRect(snakePart.x, snakePart.y, unitSize, unitSize);
+    })
 
+};
+function changeDirection(event){
+    const keyPressed = event.keyCode;
+    const UP = 38;
+    const DOWN = 40;
+    const LEFT = 37;
+    const RIGHT = 39;
 
-    var sections = document.querySelectorAll('section');
+    const goingUP = (yVelocity == -unitSize);
+    const goingDOWN = (yVelocity == unitSize);
+    const goingLEFT = (xVelocity == -unitSize);
+    const goingRIGHT = (xVelocity == unitSize);
 
+    switch(true){
+        case(keyPressed == LEFT && !goingRIGHT):
+            xVelocity = -unitSize;
+            yVelocity = 0;
+            break;
+        case(keyPressed == UP && !goingDOWN):
+            xVelocity = 0;
+            yVelocity = -unitSize;
+            break;
 
-    sections.forEach(function(section) {
+        case(keyPressed == RIGHT && !goingLEFT):
+            xVelocity = unitSize;
+            yVelocity = 0;
+            break;
 
+        case(keyPressed == DOWN && !goingUP):
+            xVelocity = 0;
+            yVelocity = unitSize;
+            break;
+    }
+};
+function checkGameOver(){
+    switch(true){
+        case (snake[0].x < 0):
+            running =false;
+            break;
+    case (snake[0].x >= gameWidth):
+            running =false;
+            break;
+    case (snake[0].y < 0):
+            running =false;
+            break;
+    case (snake[0].y >= gameHeight):
+            running =false;
+            break;
+    }
 
-        section.style.display = 'none';
-
-
-    });
-
- 
-
-    // Afficher la section sélectionnée
-
-
-    var section = document.getElementById(sectionId);
-
-
-    section.style.display = 'block';
-
-
-}
-
- 
-
-// Fonction d'initialisation
-
-
-function initialiser() {
-
-
-    // Lier les événements de clic aux liens du menu
-
-
-    var menuLinks = document.querySelectorAll('nav a');
-
-
-    menuLinks.forEach(function(link) {
-
-
-        link.addEventListener('click', function(event) {
-
-
-            event.preventDefault(); // Empêcher le comportement de lien par défaut
-
-
-            var sectionId = link.getAttribute('href').substring(1);
-
-
-            afficherSection(sectionId);
-
-
-        });
-
-
-    });
-
- 
-
-    // Afficher la section "Accueil" par défaut
-
-
-    afficherSection('accueil');
-
-
-}
-
- 
-
-// Appeler la fonction d'initialisation lorsque la page est chargée
-
-
-window.addEventListener('load', initialiser);
+    for(let i = 1; i < snake.length; i+=1){
+        if(snake[i].x == snake[0].x && snake[i].y ==snake[0].y){
+            running = false;
+        }
+    }
+};
+function displayGameOver(){
+    ctx.font = "50px MV Boli";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER!", gameWidth / 2, gameHeight / 2);
+    running = false;
+};
+function resetGame(){
+    score = 0;
+    xVelocity = unitSize;
+    yVelocity = 0;
+    snake = [
+        {x:unitSize * 4, y:0},
+        {x:unitSize * 3, y:0},
+        {x:unitSize * 2, y:0},
+        {x:unitSize * 1, y:0},
+        {x:unitSize, y:0},
+    ];
+    gameStart();
+};
